@@ -1,21 +1,16 @@
-"""oks2 URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/4.0/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+# -*- coding: utf-8 -*-
+# Subject to the terms of the GNU AFFERO GENERAL PUBLIC LICENSE, v. 3.0. If a copy of the AGPL was not
+# distributed with this file, You can obtain one at http://www.gnu.org/licenses/agpl.txt
+#
+# Author: Davide Galletti                davide   ( at )   c4k.it
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include, re_path
+from django.shortcuts import redirect
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('ks/', include('ks.urls')),
+    path('', RedirectView.as_view(pattern_name='home', permanent=True)),
+    #    path('api/', 'ks.api', 'ks'),
 ]
