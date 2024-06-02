@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% comment %}
+# -*- coding: utf-8 -*-
+# Subject to the terms of the GNU AFFERO GENERAL PUBLIC LICENSE, v. 3.0. If a copy of the AGPL was not
+# distributed with this file, You can obtain one at http://www.gnu.org/licenses/agpl.txt
+#
+# Author: Davide Galletti                davide   ( at )   c4k.it
+{% endcomment %}
+{% load static %}
+{% block content %}
+    <h3><strong>{{ this_ks.name }}</strong></h3>
+    <h4>{{ this_ks.description }}</h4>
+    <h5>Provided by <strong><a href="{{ this_ks.organization.website }}"
+                               target="_blank">{{ this_ks.organization.name }}</a></strong></h5>
+    <hr/>
+    <h5>{% autoescape off %}{{ this_ks.html_home }}{% endautoescape %}</h5>
+{% endblock %}
+{% block message %}
+    {{ message }}
+{% endblock %}

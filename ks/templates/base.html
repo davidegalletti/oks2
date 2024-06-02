@@ -1,0 +1,88 @@
+{% comment %}
+# Subject to the terms of the GNU AFFERO GENERAL PUBLIC LICENSE, v. 3.0. If a copy of the AGPL was not
+# distributed with this file, You can obtain one at http://www.gnu.org/licenses/agpl.txt
+#
+# Author: Davide Galletti                davide   ( at )   c4k.it
+{% endcomment %}
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" prefix="dct: http://purl.org/dc/terms/
+                        rdf: http://www.w3.org/1999/02/22-rdf-syntax-ns#
+                        dcat: http://www.w3.org/ns/dcat#
+                        foaf: http://xmlns.com/foaf/0.1/">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{{ this_ks.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="Description" lang="en" content="Knowledge Oriented Architecture - Proof of concept">
+    <meta name="author" content="Davide Galletti - davide@c4k.it">
+    <meta name="robots" content="index, follow">
+
+    <!-- icons -->
+    <link rel="shortcut icon" type="image/x-icon" href="{% static "favicon.ico" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "css/tooltipster.bundle.min.css" %}"/>
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.4/themes/smoothness/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="{% static "js/tooltipster.bundle.min.js" %}"></script>
+    <script src="{% static "js/oks.js" %}"></script>
+
+    <link rel="stylesheet" href="{% static "css/styles.css" %}">
+</head>
+<body>
+<div class="header">
+    <div class="container">
+        <h1 class="header-heading">
+            {% if this_ks.organization.logo %}
+                <a href="{{ this_ks.organization.website }}" target="_blank"><img
+                        src="{{ this_ks.organization.logo }}"/></a>
+            {% endif %}
+            {{ this_ks.name }}
+        </h1>
+    </div>
+</div>
+<div class="nav-bar">
+    <div class="container">
+        <ul class="nav">
+            <li><a href="{% url 'home' %}">Home</a></li>
+            <li><a href=" url 'ks_explorer' ?ks_complete_url={{ this_ks_encoded_url }}"
+                   title="Browse the dataset types and actual datasets in this OKS">Browse this OKS</a></li>
+            {% if user.is_authenticated %}
+                <li><a href="{% url 'ks_explorer_form' %}"
+                       title="Browse the dataset types and actual datasets of another OKS with his homepage URL">Browse
+                    another OKS</a></li>
+                <li><a href="{% url 'subscriptions' %}"
+                       title="List of Events, Subscriptions to and from this OKS, Notifications to be sent and to be processed.">Subscriptions...</a>
+                </li>
+                Welcome {{ user.first_name }}
+            {% else %}
+                <li><a href="/admin/login/" target="_blank" title="Login with a Django administrator's account.">Login...</a>
+                </li>
+            {% endif %}
+            <li><a href="http://www.c4k.it/oks" title="Documentation page describing an Open Knowledge Server."
+                   target="_blank">What is an OKS?</a></li>
+        </ul>
+    </div>
+</div>
+<div class="content">
+    <div class="container">
+        <div class="main">
+            <div id="_time"></div>
+            {% block content %}{% endblock %}
+            {% block message %}{% endblock %}
+        </div>
+    </div>
+</div>
+<div class="footer">
+    <div class="container">
+        More info on <a href="http://www.thekoa.org" target="_blank">theKOA.org</a> - <a href=" url 'disclaimer' "
+                                                                                         title="Please read the disclaimer.">Disclaimer</a>
+        -
+        &copy; Copyright 2015-16 <a href="http://www.c4k.it" target="_blank">C4K.it</a>
+    </div>
+</div>
+</body>
+</html>
+                

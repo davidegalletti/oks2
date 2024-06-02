@@ -9,3 +9,4 @@ from .keep_safe import STAGE_SECRET_KEY
 
 SECRET_KEY = STAGE_SECRET_KEY
 DATABASES['default']['NAME'] = 'oks_root_stage'
+DATABASES['materialized']['NAME'] = 'oks_root_stagem'

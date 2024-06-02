@@ -5,6 +5,12 @@
 # Author: Davide Galletti                davide   ( at )   c4k.it
 from django.http import HttpResponse
 from django.shortcuts import render
+from ks.models import this_ks
+
+
+def home(request):
+    cont = {'this_ks': this_ks, 'this_ks_encoded_url': this_ks.url(True)}
+    return render(request, 'ks/home.html', cont)
 
 
 def debug(request):
@@ -17,11 +23,3 @@ def debug(request):
     return HttpResponse( "Debug")
 
 
-def home(request):
-    '''
-    created to debug code
-
-    Args:
-        request:
-    '''
-    return HttpResponse( "Home")
