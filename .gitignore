@@ -1,2 +1,5 @@
 /oks2/keep_safe.py
 /.idea/
+/oks.sqlite3
+/oks (copia).sqlite3
+/Pipfile.lock
