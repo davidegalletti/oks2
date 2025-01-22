@@ -9,6 +9,6 @@ from .keep_safe import SECRET_KEY as SAFE_SECRET_KEY, DATABASE_PASSWORD
 
 
 SECRET_KEY = SAFE_SECRET_KEY
-DATABASES['default']['NAME'] = 'oks_root'
-DATABASES['materialized']['NAME'] = 'oks_rootm'
-DATABASES['default']['PASSWORD'] = DATABASE_PASSWORD
+# DATABASES['default']['NAME'] = 'oks_root'
+# DATABASES['materialized']['NAME'] = 'oks_rootm'
+# DATABASES['default']['PASSWORD'] = DATABASE_PASSWORD

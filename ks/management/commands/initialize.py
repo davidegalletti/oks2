@@ -37,9 +37,15 @@ class Command(BaseCommand):
             'db_alias', nargs='?',
             help="db_alias",
         )
+        parser.add_argument(
+            'root', nargs='?',
+            help="1 for rootoks.c4k.org, any other value or no value not root",
+        )
 
     def handle(self, *args, **options):
-        db_alias = options['db_alias']
+        db_alias = 'default'
+        if db_alias in options:
+            db_alias = options['db_alias']
         c4k_oks(db_alias)
         # license()
         logger.info("END END END fixture END END END")

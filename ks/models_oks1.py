@@ -12,6 +12,29 @@ from django.db import models
 logger = logging.getLogger(__name__)
 
 
+class KCModelManager(models.Manager):
+    """
+    KC = KnowledgeChunk
+    Created to be used by KnowledgeChunk/ShareableModel so that all classes that inherit
+    will get the post_save signal bound to model_post_save. The following decorator
+
+    @receiver(post_save, sender=KnowledgeChunk)
+    def model_post_save(sender, **kwargs):
+
+    wouldn't work at all while it would work specifying the class name that inherits e.g. Workflow
+
+    @receiver(post_save, sender=Workflow)
+    def model_post_save(sender, **kwargs):
+    """
+
+    def contribute_to_class(self, model, name):
+        super(KCModelManager, self).contribute_to_class(model, name)
+        self._bind_post_save_signal(model)
+
+    def _bind_post_save_signal(self, model):
+        models.signals.post_save.connect(model_post_save, model)
+
+
 def model_post_save(sender, **kwargs):
     # TODO CHECK PERCHE' NON PRE_SAVE???
     if kwargs['instance'].UKCL == "":
@@ -27,21 +50,6 @@ def model_post_save(sender, **kwargs):
             kwargs['instance'].save()
 
 
-class KCModelManager(models.Manager):
-    """
-    KC = KnowledgeChunk
-    Created to be used by KnowledgeChunk/ShareableModel so that all classes that inherit
-    will get the post_save signal bound to model_post_save.
-    """
-
-    def contribute_to_class(self, model, name):
-        super(KCModelManager, self).contribute_to_class(model, name)
-        self._bind_post_save_signal(model)
-
-    def _bind_post_save_signal(self, model):
-        models.signals.post_save.connect(model_post_save, model)
-
-
 class KnowledgeChunk(models.Model):
     '''
     KnowledgeChunk (it was ShareableModel) is the superclass of all classes, including the ones you define in your
@@ -55,16 +63,12 @@ class KnowledgeChunk(models.Model):
     '''
     prev_UKCL = UKCL_previous_version is the UKCL of the previous version if 
     this record has been created with the new_version method.
-    It is used (e.g. when materializing) to update the relationships from old to new records
+    It is used when materializing to update the relationships from old to new records
     '''
     prev_UKCL = models.CharField(max_length=2000, null=True, blank=True, db_index=True)
     '''
     Each instance of a KnowledgeChunk Model should, sooner or later, be part of a dataset that is not a view neither 
     shallow e.g. has version information. DataSet.set_released sets this attribute for each instance in the dataset
-    Only one dataset because I envision the E/R diagram partitioned in small structured datasets.
-    If you need to share a more complex dataset you will combine more datasets sharing them.
-    It would be interesting to have filters on the datasets (are there in views?) so that I can share subsets
-    of a dataset or of many datasets.
     '''
     dataset_I_belong_to = models.ForeignKey("DataSet", on_delete=models.CASCADE, null=True, blank=True,
                                             related_name='+')
@@ -73,6 +77,26 @@ class KnowledgeChunk(models.Model):
 
     class Meta:
         abstract = True
+
+    def generate_UKCL(self):
+        '''
+        *** method that works on the same database where self is saved ***
+        UKCL is generated on records owned by this_ks
+        '''
+        try:
+            # http://stackoverflow.com/questions/10375019/get-database-django-model-object-was-queried-from
+            db_alias = self._state.db
+            this_ks = KnowledgeServer.this_knowledge_server()
+
+            mm = self.get_model_metadata(db_alias=db_alias)
+            name = mm.name
+            id_field = mm.id_field
+            namespace = OrmWrapper.get_model_container_name(this_ks.netloc, mm.module)
+            return this_ks.url() + "/" + namespace + "/" + name + "/" + str(getattr(self, id_field))
+        except Exception as es:
+            logger.error(
+                "Exception 'generate_UKCL' " + self.__class__.__name__ + "." + str(self.pk) + ":" + str(es))
+            return ""
 
 
 class License(KnowledgeChunk):
@@ -83,29 +107,28 @@ class License(KnowledgeChunk):
     '''
     # legacy_id opendefinition api yeald a readable id
     legacy_id = models.CharField(max_length=100)
-    short_name = models.CharField(max_length=50)
-    name = models.CharField(max_length=255)  # title in od api
+    name = models.CharField(max_length=255)
     other_data = models.JSONField(null=True, blank=True)
     domain_content = models.BooleanField(null=True, blank=True)
     domain_data = models.BooleanField(null=True, blank=True)
     domain_software = models.BooleanField(null=True, blank=True)
     maintainer = models.CharField(max_length=255, null=True, blank=True)
-    conformance_od = models.BooleanField("Conformant for Open Definition", null=True, blank=True)
-    conformance_osd = models.BooleanField("Conformant for The Open Source Definition", null=True, blank=True)
+    conformant_for_opendefinition = models.BooleanField(null=True, blank=True)
     active = models.BooleanField(null=True, blank=True)
     url_info = models.CharField(max_length=160, null=True, blank=True)
 
-    # human_readable is a summary of the legal code;
-    human_readable = models.TextField(null=True, blank=True)
-    # legalcode = models.TextField(default="") # NON LO METTEREI
-    adaptation_shared = models.BooleanField(null=True, blank=True)
-    # requires to be shared with the attribution
-    attribution = models.BooleanField(null=True, blank=True)
-    # requires to be shared with the same license
-    share_alike = models.BooleanField(null=True, blank=True)
-    commercial_use = models.BooleanField(null=True, blank=True)
-    derivatives = models.BooleanField(null=True, blank=True)
-    image_url = models.CharField(max_length=160, null=True, blank=True)
+    # short_name = models.CharField(max_length=50)
+    # # human_readable is a summary of the legal code;
+    # human_readable = models.TextField(null=True, blank=True)
+    # legalcode = models.TextField(default="")
+    # adaptation_shared = models.BooleanField(null=True, blank=True)
+    # # requires to be shared with the attribution
+    # attribution = models.BooleanField(null=True, blank=True)
+    # # requires to be shared with the same license
+    # share_alike = models.BooleanField(null=True, blank=True)
+    # commercial_use = models.BooleanField(null=True, blank=True)
+    # derivatives = models.BooleanField(null=True, blank=True)
+    # image = models.CharField(max_length=160, null=True, blank=True)
     # image_small = models.CharField(max_length=160, null=True, blank=True)
 
 
@@ -117,13 +140,13 @@ class Organization(KnowledgeChunk):
 
 
 class KnowledgeServer(KnowledgeChunk):
-    root_apps = ['knowledge_server', 'licenses', 'serializable']  #TODO: cosa è root_apps
+    root_apps = ['knowledge_server', 'licenses', 'serializable']  # TODO: cosa è root_apps
     name = models.CharField(max_length=500)
     description = models.CharField(max_length=2000, blank=True)
     # ASSERT: only one KnowledgeServer in each KS has this_ks = True (in materialized db); I use it to know in which KS I am
     # this is handled when importing data about an external KS; I cannot use an approach like Django's SITE_ID
     # as this_ks might change over time (it is a KnowledgeChunk itself, part of a DataSet ...)
-    this_ks = models.BooleanField(default=False)  #TODO: mi sembrava di aver pensato di cambiare qualcosa qui
+    this_ks = models.BooleanField(default=False)  # TODO: mi sembrava di aver pensato di cambiare qualcosa qui
     # urlparse terminology https://docs.python.org/2/library/urlparse.html
     # scheme e.g. { "http" | "https" }
     scheme = models.CharField(max_length=50, default="http")
@@ -212,7 +235,8 @@ org_dss = DataSetStructure.get_from_name(DataSetStructure.organization_DSN)
 
 class ModelMetadata(KnowledgeChunk):
     '''
-    A ModelMetadata roughly contains the meta-data describing a table in a database or a class if we have an ORM
+    A ModelMetadata roughly contains the meta-data describing a table in a database or a class
+    if we have an ORM
     '''
     # this name corresponds to the class name
     name = models.CharField(max_length=100, db_index=True)
