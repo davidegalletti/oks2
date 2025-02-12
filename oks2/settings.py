@@ -12,3 +12,5 @@ SECRET_KEY = SAFE_SECRET_KEY
 # DATABASES['default']['NAME'] = 'oks_root'
 # DATABASES['materialized']['NAME'] = 'oks_rootm'
 # DATABASES['default']['PASSWORD'] = DATABASE_PASSWORD
+
+API_DEFAULT_FORMAT = 'JSON'

@@ -5,7 +5,8 @@
 # Author: Davide Galletti                davide   ( at )   c4k.it
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
+from django.conf import settings
 from django.urls import reverse
 from urllib.request import urlopen
 
@@ -22,23 +23,57 @@ def json_serial(obj):
     raise TypeError("Type not serializable")
 
 
-class ApiInvoker:
-    def __init__(self, outcome=None, request_format=None):
+class GenericApi:
+    '''
+    Responsabilities: invoke a url both http and https setting headers, store the response, parse the response
+        in json, ...
+        Prepare the output of an api
+        headers: TODO specify which ones
+            https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
+    '''
+
+    def __init__(self, url=None, headers={}, outcome=None, format=None):
+        self.response = None
         self.outcome = outcome
-        self.request_format = request_format
+        self.url = url
+        self.format = format
+        self.decoded_response = None
 
-    def invoke(self, remote_url):
-        response = urlopen(remote_url)
+    def invoke(self):
+        response = urlopen(self.url)
         self.response = response.read().decode("utf-8")
-        self.parse(self.response)
+        if self.response:
+            self.parse()
+
+    def parse(self):
+        self.decoded_response = json.loads(self.response)
+
+    @property
+    def response_format(self):
+        if self.format:
+            return self.format
+        if self.request:
+            # we try the GET parameter first
+            if 'format' in self.request.GET.keys():
+                return self.request.GET['format'].upper()
+            if 'HTTP_ACCEPT' in self.request.META:
+                accept_header = self.request.META['HTTP_ACCEPT']
+                if accept_header == 'application/json':
+                    return 'JSON'
+                # elif accept_header == 'application/xml':
+                #     return 'XML'
+                elif accept_header[:9] == 'text/html':
+                    # 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+                    return 'HTML'
+        return settings.API_DEFAULT_FORMAT
 
 
-class Api:
+class OksApi(GenericApi):  # Queste sono specifiche di OKS perché il parse si aspetta un certo formato
     success = "success"
     failure = "failure"
 
     def __init__(self, outcome="", message="", content="", request=None, format='json',
-                 datetime_generated_utc=datetime.utcnow(), deprecated=False, deprecation_message=""):
+                 datetime_generated_utc=datetime.now(timezone.utc), deprecated=False, deprecation_message=""):
         self.outcome = outcome
 
         self.message = message
@@ -55,28 +90,6 @@ class Api:
         self.response = response.read().decode("utf-8")
         self.parse(self.response)
 
-    @property
-    def response_format(self):
-        if self.format:
-            return self.format
-        if self.request:
-            # we try the GET parameter first
-            if 'format' in self.request.GET.keys():
-                return self.request.GET['format'].upper()
-            try:
-                accept_header = self.request.META['HTTP_ACCEPT']
-                if accept_header == 'application/json':
-                    return 'JSON'
-                #                 elif accept_header == 'application/xml':
-                #                     return 'XML'
-                elif accept_header[:9] == 'text/html':
-                    # 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-                    return 'HTML'
-            except Exception as e:
-                return Api.default_format
-        else:
-            return Api.default_format
-
     def invoke_oks_api(self, oks, api):
         oks_url = KsUrl(oks)
         local_url = reverse(api)
@@ -90,8 +103,6 @@ class Api:
                            "content": self.content}, sort_keys=False, default=json_serial)
 
     def parse(self, json_response):
-        self.response = json_response
-        decoded = json.loads(self.response)
-        self.status = decoded['status']
-        self.message = decoded['message']
-        self.content = decoded['content']
+        self.status = self.decoded_response['status']
+        self.message = self.decoded_response['message']
+        self.content = self.decoded_response['content']
