@@ -74,6 +74,7 @@ class KnowledgeChunk(models.Model):
     class Meta:
         abstract = True
 
+    # OKS2 TODO property to get ModelMetadata e conseguentemente DataSetStructure
 
 class License(KnowledgeChunk):
     '''
@@ -147,13 +148,13 @@ class KnowledgeServer(KnowledgeChunk):
 
 
 class DataSetStructure(KnowledgeChunk):
-    # USATI IN OKS1 X ESTRARRE LE ISTANZE SPECIFICHE DI DSS; RENDERE LE ISTANZE VARIABILI GLOBALI DEFINITE QUI IN
-    # MODEL, FARE LO STESSO PER THIS_KS
+    # USATI IN OKS1 X ESTRARRE LE ISTANZE SPECIFICHE DI DSS; RENDERE LE ISTANZE VARIABILI GLOBALI DEFINITE
+    # QUI IN MODEL, FARE LO STESSO PER THIS_KS
     # DSN = DataSet Structure Name
-    dataset_structure_DSN = "Dataset structure"
-    model_metadata_DSN = "Model meta-data"
-    organization_DSN = "Organization and Open Knowledge Servers"
-    # license_DSN = "License"
+    dataset_structure_dsn = "Dataset structure"
+    model_metadata_dsn = "Model meta-data"
+    organization_dsn = "Organization and Open Knowledge Servers"
+    license_dsn = "License"
     """    Types of DataSetStructures
     versionable  : they are the default, used to define the structure of an DataSet
                    CONSTRAINT: if a ModelMetadata is in one of them it cannot be in another one of them
@@ -205,44 +206,43 @@ class DataSetStructure(KnowledgeChunk):
             return None
 
 
-dss_dss = DataSetStructure.get_from_name(DataSetStructure.dataset_structure_DSN)
-mm_dss = DataSetStructure.get_from_name(DataSetStructure.model_metadata_DSN)
-org_dss = DataSetStructure.get_from_name(DataSetStructure.organization_DSN)
+dss_dss = DataSetStructure.get_from_name(DataSetStructure.dataset_structure_dsn)
+mm_dss = DataSetStructure.get_from_name(DataSetStructure.model_metadata_dsn)
+org_dss = DataSetStructure.get_from_name(DataSetStructure.organization_dsn)
 
 
 class ModelMetadata(KnowledgeChunk):
-    '''
-    A ModelMetadata roughly contains the meta-data describing a table in a database or a class if we have an ORM
-    '''
-    # this name corresponds to the class name
-    name = models.CharField(max_length=100, db_index=True)
-    '''
-    The module determines the app/module name containing the class
-    describing the model (e.g. the object-relational mapping). A module acts as 
-    a namespace that belongs to the organization that created the model (and the 
-    ModelMetadata record). Within that namespace the model names are unique. A model 
+    """
+    COMMENTO OKS1: "A ModelMetadata roughly contains the meta-data describing a table in a database or a
+    class if we have an ORM"
+    OKS2: probabilmente il grosso lo fa il ContentType o meglio l'istanza di models.Model
+    che ottengo dal ContentType
+    dal content type deriviamo il module/app_label
+    A module acts as a namespace that belongs to the organization that created the model (and the
+    ModelMetadata record). Within that namespace the model names are unique. A model
     License che be in the "licenses" namespace of an OKS but also on the "software"
     namespace of the OKS or on another namespace of another OKS.
     Along with the Organization URL netloc, it is used to create a unique
     name for the app/module so that there can be no collisions. See OrmWrapper
-    for more details.
-    '''
-    '''
-    module is Python terminology; app is Django. More generally the module is a group of models,
-    shareable models in our case. It is part of the name of the namespace where each model lives.
-    It is used to build the UKCL.
-    For its use, it is not supposed to change over time.
-    '''
-    module = models.CharField(max_length=500, db_index=True)
+    for more details. It is used to build the UKCL.
+
+    """
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, blank=True, null=True)
+
+    # this name corresponds to the class name
+    # oks1 name = models.CharField(max_length=100, db_index=True, blank=True, null=True)
+    # oks1 module = models.CharField(max_length=500, db_index=True)
     description = models.CharField(max_length=2000, default="")
-    table_name = models.CharField(max_length=255, db_column='tableName', default="")
-    id_field = models.CharField(max_length=255, db_column='idField', default="id")
-    name_field = models.CharField(max_length=255, db_column='nameField', default="name")
-    description_field = models.CharField(max_length=255, db_column='descriptionField', default="description")
+    # oks1 table_name = models.CharField(max_length=255, db_column='tableName', default="")  #SEMBRA NON USATA
+    # oks1 id_field = models.CharField(max_length=255, db_column='idField', default="id")
+    name_of_field_name = models.CharField(max_length=255, db_column='nameField', default="name", blank=True, null=True)
+    # OKS2 ma mi serve una rappresentazione per cui potrei verificare se c'è __str__ ?
+    description_field = models.CharField(max_length=255, db_column='descriptionField', blank=True, null=True)
     '''
-    dataset_structure attribute is not in NORMAL FORM! When not null it tells in which DataSetStructure is this 
-    ModelMetadata; a ModelMetadata must be in only one DataSetStructure for version/state purposes! 
-    It can be in as many DataSetStructure-views as you need.
+    ModelMetadata must be in only one DataSetStructure for version/state purposes! 
+    Hence dataset_structure could be found filtering on DataSetStructure that are not views and 
+    have a node related to this ModelMetadata.
+    It can be in many DataSetStructure-views.
     '''
     dataset_structure = models.ForeignKey("DataSetStructure", on_delete=models.CASCADE, null=True, blank=True)
 
@@ -252,7 +252,7 @@ class StructureNode(KnowledgeChunk):
     # attribute is blank for the entry point as it is available as dataset.root
     attribute = models.CharField(max_length=255, blank=True)
     # if ct and fk are not '' then it is a GenericForeignKey e.g. I do not
-    # now to which ContentType the fk points to; ct_field tells me which ContentType;
+    # know to which ContentType the fk points to; ct_field tells me which ContentType;
     # fk tells me the pk value
     # model_metadata is None if it is a GenericForeignKey
     ct_field = models.CharField(max_length=255, default='')
@@ -275,7 +275,7 @@ class StructureNode(KnowledgeChunk):
     # if not external_reference all attributes are exported, otherwise only the id
     external_reference = models.BooleanField(default=False, db_column='externalReference', db_index=True)
     # is_many is true if the attribute correspond to a list of instances of the ModelMetadata
-    is_many = models.BooleanField(default=False, db_column='isMany')
+    is_many = models.BooleanField(default=False, db_column='isMany')  # TODO CHECK SI RICAVA DAI METADATI???
 
 
 class Workflow(KnowledgeChunk):

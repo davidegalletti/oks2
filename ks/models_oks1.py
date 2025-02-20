@@ -173,10 +173,10 @@ class DataSetStructure(KnowledgeChunk):
     # USATI IN OKS1 X ESTRARRE LE ISTANZE SPECIFICHE DI DSS; RENDERE LE ISTANZE VARIABILI GLOBALI DEFINITE QUI IN
     # MODEL, FARE LO STESSO PER THIS_KS
     # DSN = DataSet Structure Name
-    dataset_structure_DSN = "Dataset structure"
-    model_metadata_DSN = "Model meta-data"
-    organization_DSN = "Organization and Open Knowledge Servers"
-    # license_DSN = "License"
+    dataset_structure_dsn = "Dataset structure"
+    model_metadata_dsn = "Model meta-data"
+    organization_dsn = "Organization and Open Knowledge Servers"
+    # license_dsn = "License"
     """    Types of DataSetStructures
     versionable  : they are the default, used to define the structure of an DataSet
                    CONSTRAINT: if a ModelMetadata is in one of them it cannot be in another one of them
@@ -228,9 +228,9 @@ class DataSetStructure(KnowledgeChunk):
             return None
 
 
-dss_dss = DataSetStructure.get_from_name(DataSetStructure.dataset_structure_DSN)
-mm_dss = DataSetStructure.get_from_name(DataSetStructure.model_metadata_DSN)
-org_dss = DataSetStructure.get_from_name(DataSetStructure.organization_DSN)
+dss_dss = DataSetStructure.get_from_name(DataSetStructure.dataset_structure_dsn)
+mm_dss = DataSetStructure.get_from_name(DataSetStructure.model_metadata_dsn)
+org_dss = DataSetStructure.get_from_name(DataSetStructure.organization_dsn)
 
 
 class ModelMetadata(KnowledgeChunk):
@@ -261,7 +261,7 @@ class ModelMetadata(KnowledgeChunk):
     description = models.CharField(max_length=2000, default="")
     table_name = models.CharField(max_length=255, db_column='tableName', default="")
     id_field = models.CharField(max_length=255, db_column='idField', default="id")
-    name_field = models.CharField(max_length=255, db_column='nameField', default="name")
+    name_of_field_name = models.CharField(max_length=255, db_column='nameField', default="name")
     description_field = models.CharField(max_length=255, db_column='descriptionField', default="description")
     '''
     dataset_structure attribute is not in NORMAL FORM! When not null it tells in which DataSetStructure is this 
